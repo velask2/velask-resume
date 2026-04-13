@@ -105,18 +105,39 @@
 
     /* ── Page wrapper ── */
     .page-wrapper {
-      padding: 68px 24px 56px;
+      padding: 68px 0 56px;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
     }
 
-    /* ── Resume sheet ── */
+    /* Scale container — shrinks resume to fit viewport on screen */
+    .page-scaler {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      transform-origin: top center;
+    }
+
+    /* ── Resume sheet — exact A4 at 96 dpi ── */
     .resume {
-      width: 794px;
+      width: 794px;       /* 210 mm */
+      min-height: 1123px; /* 297 mm */
       background: var(--bg);
       box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 12px 32px rgba(0,0,0,0.06);
       border-radius: 2px;
       overflow: hidden;
+      position: relative;
+    }
+
+    /* Page-break line visible at the bottom of each A4 page on screen */
+    .page-break-guide {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 6px, transparent 6px, transparent 12px);
+      pointer-events: none;
     }
 
     /* ── Header ── */
@@ -397,22 +418,28 @@
     @media print {
       @page {
         size: A4;
-        margin: 12mm 14mm;
+        margin: 0;
       }
 
       body { background: white; }
 
-      .toolbar { display: none !important; }
+      .toolbar,
+      .page-break-guide { display: none !important; }
 
-      .page-wrapper {
-        padding: 0;
-        display: block;
+      .page-wrapper { padding: 0; display: block; }
+
+      .page-scaler {
+        transform: none !important;
+        width: auto !important;
+        height: auto !important;
+        gap: 0;
       }
 
       .resume {
+        width: 210mm;
+        min-height: 297mm;
         box-shadow: none;
         border-radius: 0;
-        width: 100%;
       }
 
       .exp-item { page-break-inside: avoid; }
@@ -441,6 +468,7 @@
 
 <!-- ── Resume ── -->
 <div class="page-wrapper">
+<div class="page-scaler" id="pageScaler">
 <article class="resume" id="resume">
 
   <!-- Header -->
@@ -729,7 +757,8 @@
     </main>
   </div>
 </article>
-</div>
+</div> <!-- /page-scaler -->
+</div> <!-- /page-wrapper -->
 
 <script>
   const translations = {
@@ -866,6 +895,27 @@
 
     document.documentElement.lang = lang;
   }
+
+  // ── Viewport scaling ──
+  // Scales the resume down so it fits the screen like a document preview.
+  // Print output is unaffected (CSS resets transform).
+  function scaleToViewport() {
+    const scaler = document.getElementById('pageScaler');
+    const resume = document.getElementById('resume');
+    const padding = 48;
+    const maxWidth = 794;
+    const available = window.innerWidth - padding;
+    const scale = Math.min(available / maxWidth, 1);
+
+    scaler.style.transform = `scale(${scale})`;
+    scaler.style.transformOrigin = 'top center';
+    // Collapse the layout space to match scaled visual size
+    scaler.style.width  = `${maxWidth * scale}px`;
+    scaler.style.height = `${resume.offsetHeight * scale}px`;
+  }
+
+  window.addEventListener('load', scaleToViewport);
+  window.addEventListener('resize', scaleToViewport);
 </script>
 </body>
 </html>
