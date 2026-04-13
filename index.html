@@ -105,44 +105,34 @@
 
     /* ── Page wrapper ── */
     .page-wrapper {
-      padding: 68px 0 56px;
+      padding: 68px 24px 56px;
       display: flex;
       justify-content: center;
       align-items: flex-start;
     }
 
-    /* Scale container — shrinks resume to fit viewport on screen */
-    .page-scaler {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      transform-origin: top center;
-    }
-
-    /* ── Resume sheet — exact A4 at 96 dpi ── */
+    /* ── Resume sheet ── */
+    /*
+      width: 794px = 210mm (A4) at 96 dpi.
+      No overflow:hidden — content must flow freely for correct print pagination.
+      Screen: zoom:0.75 shrinks the layout box (unlike transform, zoom affects
+      flow) so the preview matches what the PDF viewer shows at "fit to page".
+      Print: zoom resets to 1 → exact A4 output.
+    */
     .resume {
-      width: 794px;       /* 210 mm */
-      min-height: 1123px; /* 297 mm */
+      width: 794px;
       background: var(--bg);
       box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 12px 32px rgba(0,0,0,0.06);
       border-radius: 2px;
-      overflow: hidden;
-      position: relative;
     }
 
-    /* Page-break line visible at the bottom of each A4 page on screen */
-    .page-break-guide {
-      position: absolute;
-      left: 0; right: 0;
-      height: 1px;
-      background: repeating-linear-gradient(90deg, #cbd5e1 0, #cbd5e1 6px, transparent 6px, transparent 12px);
-      pointer-events: none;
+    @media screen {
+      .resume { zoom: 0.75; }
     }
 
     /* ── Header ── */
     .resume-header {
-      padding: 36px 48px 28px;
+      padding: 24px 40px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: flex-end;
@@ -196,18 +186,18 @@
     .col-left {
       background: var(--bg-sidebar);
       border-right: 1px solid var(--border);
-      padding: 28px 22px;
+      padding: 20px 18px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 16px;
     }
 
     /* ── Right column ── */
     .col-right {
-      padding: 28px 36px;
+      padding: 20px 28px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 16px;
     }
 
     /* ── Section label ── */
@@ -276,7 +266,7 @@
     }
 
     /* ── Education (sidebar) ── */
-    .edu-list { display: flex; flex-direction: column; gap: 12px; }
+    .edu-list { display: flex; flex-direction: column; gap: 8px; }
 
     .edu-item {}
 
@@ -325,10 +315,10 @@
     }
 
     /* ── Experience ── */
-    .exp-list { display: flex; flex-direction: column; gap: 18px; }
+    .exp-list { display: flex; flex-direction: column; gap: 12px; }
 
     .exp-item {
-      padding-bottom: 18px;
+      padding-bottom: 12px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -361,8 +351,8 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-top: 2px;
-      margin-bottom: 7px;
+      margin-top: 1px;
+      margin-bottom: 5px;
     }
 
     .exp-role {
@@ -376,7 +366,7 @@
       color: var(--text-tertiary);
     }
 
-    .exp-bullets { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    .exp-bullets { list-style: none; display: flex; flex-direction: column; gap: 2px; }
 
     .exp-bullets li {
       font-size: 11.5px;
@@ -423,21 +413,13 @@
 
       body { background: white; }
 
-      .toolbar,
-      .page-break-guide { display: none !important; }
+      .toolbar { display: none !important; }
 
       .page-wrapper { padding: 0; display: block; }
 
-      .page-scaler {
-        transform: none !important;
-        width: auto !important;
-        height: auto !important;
-        gap: 0;
-      }
-
       .resume {
         width: 210mm;
-        min-height: 297mm;
+        zoom: 1;
         box-shadow: none;
         border-radius: 0;
       }
@@ -468,7 +450,6 @@
 
 <!-- ── Resume ── -->
 <div class="page-wrapper">
-<div class="page-scaler" id="pageScaler">
 <article class="resume" id="resume">
 
   <!-- Header -->
@@ -757,7 +738,6 @@
     </main>
   </div>
 </article>
-</div> <!-- /page-scaler -->
 </div> <!-- /page-wrapper -->
 
 <script>
@@ -896,26 +876,6 @@
     document.documentElement.lang = lang;
   }
 
-  // ── Viewport scaling ──
-  // Shows the resume at ~75% — matches typical PDF viewer "fit to page" appearance.
-  // On narrow screens it scales further to avoid horizontal scroll.
-  // Print resets transform via CSS so the output is always full A4.
-  function scaleToViewport() {
-    const scaler   = document.getElementById('pageScaler');
-    const resume   = document.getElementById('resume');
-    const A4_W     = 794;
-    const PREVIEW  = 0.75;          // target preview scale (matches PDF viewer feel)
-    const available = window.innerWidth - 48;
-    const scale    = Math.min(available / A4_W, PREVIEW);
-
-    scaler.style.transform       = `scale(${scale})`;
-    scaler.style.transformOrigin = 'top center';
-    scaler.style.width           = `${A4_W * scale}px`;
-    scaler.style.height          = `${resume.offsetHeight * scale}px`;
-  }
-
-  window.addEventListener('load', scaleToViewport);
-  window.addEventListener('resize', scaleToViewport);
 </script>
 </body>
 </html>
