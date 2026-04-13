@@ -897,21 +897,21 @@
   }
 
   // ── Viewport scaling ──
-  // Scales the resume down so it fits the screen like a document preview.
-  // Print output is unaffected (CSS resets transform).
+  // Shows the resume at ~75% — matches typical PDF viewer "fit to page" appearance.
+  // On narrow screens it scales further to avoid horizontal scroll.
+  // Print resets transform via CSS so the output is always full A4.
   function scaleToViewport() {
-    const scaler = document.getElementById('pageScaler');
-    const resume = document.getElementById('resume');
-    const padding = 48;
-    const maxWidth = 794;
-    const available = window.innerWidth - padding;
-    const scale = Math.min(available / maxWidth, 1);
+    const scaler   = document.getElementById('pageScaler');
+    const resume   = document.getElementById('resume');
+    const A4_W     = 794;
+    const PREVIEW  = 0.75;          // target preview scale (matches PDF viewer feel)
+    const available = window.innerWidth - 48;
+    const scale    = Math.min(available / A4_W, PREVIEW);
 
-    scaler.style.transform = `scale(${scale})`;
+    scaler.style.transform       = `scale(${scale})`;
     scaler.style.transformOrigin = 'top center';
-    // Collapse the layout space to match scaled visual size
-    scaler.style.width  = `${maxWidth * scale}px`;
-    scaler.style.height = `${resume.offsetHeight * scale}px`;
+    scaler.style.width           = `${A4_W * scale}px`;
+    scaler.style.height          = `${resume.offsetHeight * scale}px`;
   }
 
   window.addEventListener('load', scaleToViewport);
