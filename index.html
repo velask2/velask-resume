@@ -15,7 +15,7 @@
       --text-primary: #0f172a;
       --text-secondary: #475569;
       --text-tertiary: #94a3b8;
-      --accent: #5e6ad2;
+      --accent: #194CFF;
       --border: #e2e8f0;
       --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -101,53 +101,34 @@
 
     /* ── Page wrapper ── */
     .page-wrapper {
-      padding: 60px 24px 48px;
+      background: var(--bg-body);
+      min-height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 24px 64px;
     }
 
-    /*
-      .resume is a single flowing document at 794px (A4 width at 96 dpi).
-      Content flows naturally — no fixed height, no overflow clipping.
-
-      Page-break guide lines are drawn at every 297mm (1123px) interval
-      so you can see where each A4 page ends. Items use break-inside:avoid
-      so nothing is cut — the browser pushes the item to the next page.
-
-      Screen: zoom:0.75 makes 794px look like a document in a PDF viewer.
-      Print:  zoom:1, @page A4 margin:0 → exact A4 output.
-    */
-    .resume {
+    /* ── A4 page box ── */
+    .page {
       width: 794px;
+      height: 1123px;
+      overflow: hidden;
       background: var(--bg);
       box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.08);
+      flex-shrink: 0;
       position: relative;
     }
 
-    /* Visual page-break guides (screen only, hidden in print) */
-    .resume::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent calc(1123px - 3px),
-        #c7d2fe calc(1123px - 3px),
-        #c7d2fe 1123px
-      );
-      pointer-events: none;
-      z-index: 10;
-    }
-
     @media screen {
-      .resume { zoom: 0.75; }
+      .page + .page { margin-top: 24px; }
     }
 
-    /* ── Two-column body ── */
-    .resume-body {
+    /* ── Two-column grid ── */
+    .page-inner {
       display: grid;
       grid-template-columns: 30% 70%;
+      height: 100%;
     }
 
     /* ── Sidebar ── */
@@ -158,17 +139,25 @@
       display: flex;
       flex-direction: column;
       gap: 18px;
+      overflow: hidden;
     }
 
-    /* ── Main ── */
+    /* Sidebar strip on page 2 (background only) */
+    .col-left-empty {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+    }
+
+    /* ── Main column ── */
     .col-right {
-      padding: 24px 28px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 24px;
+      overflow: hidden;
     }
 
-    /* ── Name block (top of sidebar) ── */
+    /* ── Name block ── */
     .sidebar-name {
       padding-bottom: 18px;
       border-bottom: 1px solid var(--border);
@@ -216,6 +205,16 @@
     }
 
     .contact-list a:hover { text-decoration: underline; }
+
+    /* ── Publication links ── */
+    .pub-link {
+      font-size: 10.5px;
+      color: var(--accent);
+      text-decoration: none;
+      line-height: 1.5;
+    }
+
+    .pub-link:hover { text-decoration: underline; }
 
     /* ── Tags ── */
     .tags { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -271,22 +270,55 @@
       line-height: 1.65;
     }
 
-    /* ── Experience ── */
-    .exp-list { display: flex; flex-direction: column; }
+    /* ── Experience list — timeline ── */
+    .exp-list {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-left: 16px;
+    }
+
+    /* Vertical timeline line — border-left renders in print, background does not */
+    .exp-list::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 0;
+      border-left: 1px solid var(--border);
+    }
 
     .exp-item {
-      padding-bottom: 10px;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-      /* Never cut an item across a page — push it whole to next page */
-      break-inside: avoid;
-      page-break-inside: avoid;
+      position: relative;
+      margin-bottom: 24px;
     }
 
     .exp-item:last-child {
-      border-bottom: none;
       margin-bottom: 0;
-      padding-bottom: 0;
+    }
+
+    /* Timeline dot — left: -16px puts it at exp-list x=0 (the line);
+       translateX(-50%) centres the dot perfectly on that axis */
+    .exp-item::before {
+      content: '';
+      position: absolute;
+      left: -16px;
+      top: 5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      transform: translateX(-50%);
+    }
+
+    /* Active (current) role dot */
+    .exp-item--active::before {
+      background: var(--accent);
+      border-color: var(--accent);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     .exp-header {
@@ -361,31 +393,40 @@
       line-height: 1.5;
     }
 
+    /* ── Sub-role divider (e.g. Tuenti SVD → UID) ── */
+    .exp-subrole {
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .exp-subrole .exp-meta { margin-top: 0; }
+
     /* ── Print ── */
     @media print {
-      @page {
-        size: A4;
-        margin: 0;   /* margins are handled by HTML padding */
-      }
+      @page { size: A4; margin: 0; }
 
       body { background: white; }
-
       .toolbar { display: none !important; }
 
-      .page-wrapper { padding: 0; display: block; }
-
-      .resume {
-        width: 210mm;
-        zoom: 1;
-        box-shadow: none;
+      .page-wrapper {
+        padding: 0;
+        display: block;
+        background: white;
       }
 
-      /* Hide the visual guide lines */
-      .resume::after { display: none; }
+      .page {
+        width: 210mm;
+        height: 297mm;
+        zoom: 1;
+        box-shadow: none;
+        overflow: visible;
+        page-break-after: always;
+      }
 
-      /* Protect individual sidebar sections, not the whole column */
+      .page:last-child { page-break-after: auto; }
+
       .col-left section { break-inside: avoid; page-break-inside: avoid; }
-      .edu-item         { break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -406,122 +447,251 @@
   </button>
 </div>
 
-<!-- ── Resume ── -->
 <div class="page-wrapper">
-<article class="resume" id="resume">
-  <div class="resume-body">
 
-    <!-- ── Left column ── -->
-    <aside class="col-left">
+  <!-- ══════════════════════════════════════════ PAGE 1 ══ -->
+  <div class="page">
+    <div class="page-inner">
 
-      <div class="sidebar-name">
-        <h1>Alejandro Velasco</h1>
-        <p class="s-role" data-i18n="role">Head of Design</p>
-        <p class="s-location">Madrid, Spain</p>
-      </div>
+      <!-- Left column -->
+      <aside class="col-left">
 
-      <section>
-        <p class="label" data-i18n="contact">Contact</p>
-        <div class="contact-list">
-          <a href="mailto:velaskbiz@gmail.com">velaskbiz@gmail.com</a>
-          <a href="https://linkedin.com/in/velask" target="_blank">linkedin.com/in/velask</a>
-          <a href="https://velask.com" target="_blank">velask.com</a>
+        <div class="sidebar-name">
+          <h1>Alejandro Velasco</h1>
+          <p class="s-role" data-i18n="role">Head of Design</p>
+          <p class="s-location">Madrid, Spain</p>
         </div>
-      </section>
 
-      <section>
-        <p class="label" data-i18n="skills">Skills</p>
-        <div class="tags">
-          <span class="tag">Figma</span>
-          <span class="tag">Supernova</span>
-          <span class="tag">Linear</span>
-          <span class="tag">Design Systems</span>
-          <span class="tag">User Research</span>
-          <span class="tag">Info Architecture</span>
-          <span class="tag">Prototyping</span>
-          <span class="tag">Visual Design</span>
-          <span class="tag">AI Workflows</span>
-          <span class="tag">VS Code</span>
-        </div>
-      </section>
-
-      <section>
-        <p class="label" data-i18n="languages">Languages</p>
-        <div class="lang-list">
-          <div class="lang-item">
-            <span class="lang-name">Spanish</span>
-            <span class="lang-level" data-i18n="native">Native</span>
+        <section>
+          <p class="label" data-i18n="contact">Contact</p>
+          <div class="contact-list">
+            <a href="mailto:velaskbiz@gmail.com">velaskbiz@gmail.com</a>
+            <a href="https://linkedin.com/in/velask" target="_blank">linkedin.com/in/velask</a>
+            <a href="https://velask.com" target="_blank">velask.com</a>
           </div>
-          <div class="lang-item">
-            <span class="lang-name">English</span>
-            <span class="lang-level" data-i18n="native">Native</span>
+        </section>
+
+        <section>
+          <p class="label" data-i18n="skills">Skills</p>
+          <div class="tags">
+            <span class="tag">AI Workflows</span>
+            <span class="tag">User Research</span>
+            <span class="tag">Info Architecture</span>
+            <span class="tag">Design Systems</span>
+            <span class="tag">Claude Code</span>
+            <span class="tag">Figma</span>
+            <span class="tag">Github</span>
+            <span class="tag">NotebookLM</span>
+            <span class="tag">Loom</span>
+            <span class="tag">VS Code</span>
+            <span class="tag">Gemini Canvas</span>
+            <span class="tag">Prototyping</span>
           </div>
-          <div class="lang-item">
-            <span class="lang-name">Italian</span>
-            <span class="lang-level" data-i18n="working">Working</span>
+        </section>
+
+        <section>
+          <p class="label" data-i18n="languages">Languages</p>
+          <div class="lang-list">
+            <div class="lang-item">
+              <span class="lang-name">Spanish</span>
+              <span class="lang-level" data-i18n="native">Native</span>
+            </div>
+            <div class="lang-item">
+              <span class="lang-name">English</span>
+              <span class="lang-level" data-i18n="bilingual">Bilingual</span>
+            </div>
+            <div class="lang-item">
+              <span class="lang-name">Italian</span>
+              <span class="lang-level" data-i18n="working">Working</span>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section>
-        <p class="label" data-i18n="certifications">Certifications</p>
-        <ul class="simple-list">
-          <li data-i18n="cert1">Master Industrial &amp; Product Design</li>
-          <li>UserZoom Core Certification</li>
-          <li data-i18n="cert3">ESAD Masterclass — Porto</li>
-        </ul>
-      </section>
+        <section>
+          <p class="label" data-i18n="certifications">Certifications</p>
+          <ul class="simple-list">
+            <li data-i18n="cert1">Master Industrial &amp; Product Design</li>
+            <li>UserZoom Core Certification</li>
+          </ul>
+        </section>
 
-      <section>
-        <p class="label" data-i18n="publications">Publications</p>
-        <ul class="simple-list">
-          <li data-i18n="pub1">The Power of Structure – A Guide to Design System Models</li>
-          <li data-i18n="pub2">Design Heroes at Tuenti</li>
-        </ul>
-      </section>
+        <section>
+          <p class="label" data-i18n="publications">Publications</p>
+          <ul class="simple-list">
+            <li><a class="pub-link" href="https://velask.com/blog/the-power-of-structure-a-guide-to-design-system-models" target="_blank" data-i18n="pub1">The Power of Structure: A Guide to Design System Models</a></li>
+            <li><a class="pub-link" href="https://velask.com/blog/why-design-teams-need-psychological-safety" target="_blank" data-i18n="pub2">Why Design Teams Need Psychological Safety</a></li>
+            <li><a class="pub-link" href="https://velask.com/blog/how-to-hire-a-ui-designer" target="_blank" data-i18n="pub3">How to Hire a UI Designer</a></li>
+          </ul>
+        </section>
 
-      <section>
-        <p class="label" data-i18n="patents">Patents</p>
-        <ul class="simple-list">
-          <li data-i18n="patent1">Graphical UI for well drilling — Display screen patent</li>
-        </ul>
-      </section>
+        <section>
+          <p class="label" data-i18n="patents">Patents</p>
+          <ul class="simple-list">
+            <li><a class="pub-link" href="https://patents.justia.com/patent/D953346" target="_blank" data-i18n="patent1">Graphical UI for well drilling — Display screen patent</a></li>
+          </ul>
+        </section>
 
-      <section>
-        <p class="label" data-i18n="education">Education</p>
-        <div class="edu-list">
-          <div class="edu-item">
-            <p class="edu-school">SPD Scuola Politecnica di Design</p>
-            <p class="edu-degree" data-i18n="edu1">Master Industrial Design</p>
-            <p class="edu-year">2009 – 2010</p>
+        <section>
+          <p class="label" data-i18n="education">Education</p>
+          <div class="edu-list">
+            <div class="edu-item">
+              <p class="edu-school">SPD Scuola Politecnica di Design</p>
+              <p class="edu-degree" data-i18n="edu1">Master Industrial Design</p>
+              <p class="edu-year">2009 – 2010</p>
+            </div>
+            <div class="edu-item">
+              <p class="edu-school">Universidad Antonio de Nebrija</p>
+              <p class="edu-degree" data-i18n="edu2">Technical Engineer, Industrial Design</p>
+              <p class="edu-year">2003 – 2008</p>
+            </div>
+            <div class="edu-item">
+              <p class="edu-school">The British Council School</p>
+              <p class="edu-degree" data-i18n="edu3">General Basic Studies</p>
+              <p class="edu-year">1990 – 2003</p>
+            </div>
           </div>
-          <div class="edu-item">
-            <p class="edu-school">Universidad Antonio de Nebrija</p>
-            <p class="edu-degree" data-i18n="edu2">Technical Engineer, Industrial Design</p>
-            <p class="edu-year">2003 – 2008</p>
+        </section>
+
+      </aside>
+
+      <!-- Right column -->
+      <main class="col-right">
+
+        <section>
+          <div class="section-divider">
+            <p class="label" data-i18n="summary">Summary</p>
+            <div class="divider-line"></div>
           </div>
-          <div class="edu-item">
-            <p class="edu-school">The British Council School</p>
-            <p class="edu-degree" data-i18n="edu3">General Basic Studies</p>
-            <p class="edu-year">1990 – 2003</p>
+          <p class="summary-text" data-i18n="summary_text">Designer with 15 years of experience crafting visual and interaction languages for digital products and services. Master's degree in industrial design with a strong background in user-centered design, user research, information architecture, and prototyping.</p>
+        </section>
+
+        <section>
+          <div class="section-divider">
+            <p class="label" data-i18n="experience">Experience</p>
+            <div class="divider-line"></div>
           </div>
-        </div>
-      </section>
 
-    </aside>
+          <div class="exp-list">
 
-    <!-- ── Right column ── -->
-    <main class="col-right">
+            <div class="exp-item exp-item--active">
+              <div class="exp-header">
+                <span class="exp-company" data-i18n="stealth_co">Stealth Startup</span>
+                <span class="exp-period" data-i18n="stealth_period">May 2025 – Present</span>
+              </div>
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="stealth_role">Head of Design</span>
+              </div>
+              <ul class="exp-bullets">
+                <li data-i18n="stealth_1">Leading product and brand design initiatives for AI-powered customer experiences.</li>
+                <li data-i18n="stealth_2">Identifying AI-based automation opportunities for client-facing and back-office applications.</li>
+                <li data-i18n="stealth_3">Upgrading design ops: Rapidly evolved toolchain from Figma (Month 1) → Figma + Replit (Month 6) → Figma + VS Code + Claude (Current), integrating AI-assisted prototyping and development workflows.</li>
+                <li data-i18n="stealth_4">Managing a team of senior designers and contractors, enhancing service design and scalable design systems.</li>
+                <li data-i18n="stealth_5">Supporting M&amp;A initiatives across Spain and recruitment efforts.</li>
+              </ul>
+            </div>
 
-      <section>
-        <div class="section-divider">
-          <p class="label" data-i18n="summary">Summary</p>
-          <div class="divider-line"></div>
-        </div>
-        <p class="summary-text" data-i18n="summary_text">Designer with 15 years of experience crafting visual and interaction languages for digital products and services. Master's degree in industrial design with a strong background in user-centered design, user research, information architecture, and prototyping.</p>
-      </section>
+            <div class="exp-item">
+              <div class="exp-header">
+                <span class="exp-company">Deel</span>
+                <span class="exp-period" data-i18n="deel_period">Jun 2024 – Apr 2025</span>
+              </div>
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="deel_role">Senior Product Designer</span>
+              </div>
+              <ul class="exp-bullets">
+                <li data-i18n="deel_1">Core member of the Payroll Design team, focusing on global payroll vision.</li>
+                <li data-i18n="deel_2">Conducted research on employee payroll onboarding to enhance user experience at scale.</li>
+                <li data-i18n="deel_3">Designed complex UI walkthroughs for time attendance interpretation, streamlining payroll processes.</li>
+              </ul>
+            </div>
 
-      <section>
+            <div class="exp-item">
+              <div class="exp-header">
+                <span class="exp-company">Personio</span>
+                <span class="exp-period" data-i18n="personio_period">Aug 2022 – Jul 2024</span>
+              </div>
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="personio_role">Senior Product Designer</span>
+                <span class="exp-location">Remote</span>
+              </div>
+              <ul class="exp-bullets">
+                <li data-i18n="personio_1">Senior Product Designer on the Time &amp; Money team, driving user engagement.</li>
+                <li data-i18n="personio_2">Delivered a live tracking experience at the platform level.</li>
+                <li data-i18n="personio_3">Developed an automated premiums service to streamline salary management.</li>
+                <li data-i18n="personio_4">Drove innovation in HR technology in a fast-paced product environment.</li>
+              </ul>
+            </div>
+
+            <div class="exp-item">
+              <div class="exp-header">
+                <span class="exp-company">New Relic</span>
+                <span class="exp-period" data-i18n="newrelic_period">Nov 2020 – Jul 2022</span>
+              </div>
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="newrelic_role">Senior Product Designer</span>
+              </div>
+              <ul class="exp-bullets">
+                <li data-i18n="newrelic_1">Contributed to the End-to-End Experience Platform team at New Relic, enhancing user navigation.</li>
+                <li data-i18n="newrelic_2">Designed user interfaces for Workloads and the initial EAP Service Level Management, focusing on user-centric solutions.</li>
+                <li data-i18n="newrelic_3">Conducted user research and developed information architecture to optimize interaction and visual design.</li>
+              </ul>
+            </div>
+
+            <div class="exp-item">
+              <div class="exp-header">
+                <span class="exp-company">Toptal</span>
+                <span class="exp-period" data-i18n="toptal_period">May 2017 – Nov 2020</span>
+              </div>
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="toptal_role">Senior Designer — UI/UX/Product/Strategy</span>
+                <span class="exp-location">Remote</span>
+              </div>
+              <p class="exp-note" data-i18n="toptal_note">Roles:</p>
+              <ul class="exp-bullets">
+                <li>Author · Toptal Design Blog · SF, US</li>
+                <li>Mobile UX/UI Designer · Lykke · Zug, CH</li>
+                <li>UX/UI Designer · Nvicta · Austin, US</li>
+                <li>Lead Designer · Ayvri · Sydney, AU</li>
+                <li>UI/UX Designer · Performitiv · Chicago, US</li>
+                <li>UI/UX Designer · Renoviso · Boston, US</li>
+                <li>Design Screener · Toptal · 1 month</li>
+              </ul>
+            </div>
+
+            <div class="exp-item">
+              <div class="exp-header">
+                <span class="exp-company">velask</span>
+                <span class="exp-period" data-i18n="velask_period">Sep 2016 – Nov 2020</span>
+              </div>
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="velask_role">Product Designer &amp; Design Consultant</span>
+                <span class="exp-location">Freelance · Remote</span>
+              </div>
+              <p class="exp-note" data-i18n="velask_note">UX/UI and visual design for startups; built a surf industry brand. Clients:</p>
+              <div class="exp-roles-grid">
+                <span>Lead Product Designer · Sustainable Apparel Coalition · SF, US</span>
+                <span>Product &amp; Brand Designer · Lyra · Columbus, US</span>
+                <span>Design Consultant · Lullaai · Toronto, CA</span>
+                <span>Senior Product Designer · Payever.de · Germany</span>
+                <span>Brand Designer · Intsas · Spain</span>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ PAGE 2 ══ -->
+  <div class="page">
+    <div class="page-inner">
+
+      <div class="col-left-empty"></div>
+
+      <main class="col-right">
+
         <div class="section-divider">
           <p class="label" data-i18n="experience">Experience</p>
           <div class="divider-line"></div>
@@ -531,118 +701,29 @@
 
           <div class="exp-item">
             <div class="exp-header">
-              <span class="exp-company" data-i18n="stealth_co">Stealth Startup</span>
-              <span class="exp-period" data-i18n="stealth_period">May 2025 – Present</span>
-            </div>
-            <div class="exp-meta">
-              <span class="exp-role" data-i18n="stealth_role">Head of Design</span>
-            </div>
-            <ul class="exp-bullets">
-              <li data-i18n="stealth_1">Leading product and brand design for AI-powered customer experiences.</li>
-              <li data-i18n="stealth_2">Evolved toolchain: Figma → Figma + Replit → Figma + VS Code + Claude, integrating AI-assisted workflows.</li>
-              <li data-i18n="stealth_3">Managing senior designers and contractors, scaling service design and design systems.</li>
-              <li data-i18n="stealth_4">Identifying AI-based automation for client-facing and back-office applications.</li>
-              <li data-i18n="stealth_5">Supporting M&amp;A initiatives across Spain and design recruitment.</li>
-            </ul>
-          </div>
-
-          <div class="exp-item">
-            <div class="exp-header">
-              <span class="exp-company">Deel</span>
-              <span class="exp-period" data-i18n="deel_period">Jun 2024 – Apr 2025</span>
-            </div>
-            <div class="exp-meta">
-              <span class="exp-role" data-i18n="deel_role">Senior Product Designer</span>
-            </div>
-            <ul class="exp-bullets">
-              <li data-i18n="deel_1">Core member of the Payroll Design team, focusing on global payroll vision.</li>
-              <li data-i18n="deel_2">Researched employee payroll onboarding to improve user experience at scale.</li>
-              <li data-i18n="deel_3">Designed complex UI walkthroughs for time attendance interpretation.</li>
-            </ul>
-          </div>
-
-          <div class="exp-item">
-            <div class="exp-header">
-              <span class="exp-company">Personio</span>
-              <span class="exp-period" data-i18n="personio_period">Aug 2022 – Jul 2024</span>
-            </div>
-            <div class="exp-meta">
-              <span class="exp-role" data-i18n="personio_role">Senior Product Designer</span>
-              <span class="exp-location">Remote</span>
-            </div>
-            <ul class="exp-bullets">
-              <li data-i18n="personio_1">Delivered a live tracking experience at platform level on the Time &amp; Money team.</li>
-              <li data-i18n="personio_2">Developed an automated premiums service to streamline salary management.</li>
-              <li data-i18n="personio_3">Drove innovation in HR technology in a fast-paced product environment.</li>
-            </ul>
-          </div>
-
-          <div class="exp-item">
-            <div class="exp-header">
-              <span class="exp-company">New Relic</span>
-              <span class="exp-period" data-i18n="newrelic_period">Nov 2020 – Jul 2022</span>
-            </div>
-            <div class="exp-meta">
-              <span class="exp-role" data-i18n="newrelic_role">Senior Product Designer</span>
-            </div>
-            <ul class="exp-bullets">
-              <li data-i18n="newrelic_1">Designed Workloads UI and EAP Service Level Management on the End-to-End Platform team.</li>
-              <li data-i18n="newrelic_2">Conducted user research and developed information architecture to optimize navigation.</li>
-            </ul>
-          </div>
-
-          <div class="exp-item">
-            <div class="exp-header">
-              <span class="exp-company">Toptal</span>
-              <span class="exp-period" data-i18n="toptal_period">May 2017 – Nov 2020</span>
-            </div>
-            <div class="exp-meta">
-              <span class="exp-role" data-i18n="toptal_role">Senior Designer — UI/UX/Product/Strategy</span>
-              <span class="exp-location">Remote</span>
-            </div>
-            <p class="exp-note" data-i18n="toptal_note">Author, Toptal Design Blog · Design Screener. Clients:</p>
-            <div class="exp-roles-grid">
-              <span>Lykke · Zug, CH</span>
-              <span>Nvicta · Austin, US</span>
-              <span>Ayvri · Sydney, AU</span>
-              <span>Performitiv · Chicago, US</span>
-              <span>Renoviso · Boston, US</span>
-            </div>
-          </div>
-
-          <div class="exp-item">
-            <div class="exp-header">
-              <span class="exp-company">velask</span>
-              <span class="exp-period" data-i18n="velask_period">Sep 2016 – Nov 2020</span>
-            </div>
-            <div class="exp-meta">
-              <span class="exp-role" data-i18n="velask_role">Product Designer &amp; Design Consultant</span>
-              <span class="exp-location">Freelance · Remote</span>
-            </div>
-            <p class="exp-note" data-i18n="velask_note">UX/UI and visual design for startups; built a surf industry brand. Clients:</p>
-            <div class="exp-roles-grid">
-              <span>Sustainable Apparel Coalition · SF, US</span>
-              <span>Lyra · Columbus, US</span>
-              <span>Lullaai · Toronto, CA</span>
-              <span>Payever.de · Germany</span>
-              <span>Intsas · Spain</span>
-            </div>
-          </div>
-
-          <div class="exp-item">
-            <div class="exp-header">
               <span class="exp-company">Tuenti</span>
-              <span class="exp-period" data-i18n="tuenti_period">Mar 2011 – Jun 2016</span>
+              <span class="exp-period" data-i18n="tuenti_total">Mar 2011 – Jun 2016</span>
             </div>
             <div class="exp-meta">
-              <span class="exp-role" data-i18n="tuenti_role">Senior Visual Designer → UI Designer</span>
-              <span class="exp-location">Madrid</span>
+              <span class="exp-role" data-i18n="tuenti_svd_role">Senior Visual Designer</span>
+              <span class="exp-location" data-i18n="tuenti_svd_period">Mar 2014 – Jun 2016 · Madrid</span>
             </div>
             <ul class="exp-bullets">
-              <li data-i18n="tuenti_1">Created engaging interaction and visual design for a platform with 15M+ users.</li>
-              <li data-i18n="tuenti_2">Designed mobile-first responsive products across the full product lifecycle.</li>
-              <li data-i18n="tuenti_3">Visual design support for print, physical channels, and promotions.</li>
+              <li data-i18n="tuenti_svd_1">Created engaging, usable interaction and visual design solutions for a platform with 15M+ users.</li>
+              <li data-i18n="tuenti_svd_2">Responsible for visual presentation of the user interface — easy to read, understand, and find.</li>
             </ul>
+            <div class="exp-subrole">
+              <div class="exp-meta">
+                <span class="exp-role" data-i18n="tuenti_uid_role">UI Designer</span>
+                <span class="exp-location" data-i18n="tuenti_uid_period">Mar 2011 – Feb 2014 · Madrid</span>
+              </div>
+              <ul class="exp-bullets">
+                <li data-i18n="tuenti_uid_1">Constantly updating and improving layouts to achieve business goals.</li>
+                <li data-i18n="tuenti_uid_2">Working on visual design throughout the entire product lifecycle from concept through release.</li>
+                <li data-i18n="tuenti_uid_3">Designing mobile-first, responsive products that aid in customer persuasion and drive conversion.</li>
+                <li data-i18n="tuenti_uid_4">Visual design support for print, physical channels, and promotions.</li>
+              </ul>
+            </div>
           </div>
 
           <div class="exp-item">
@@ -655,7 +736,10 @@
               <span class="exp-location">Milan, Italy</span>
             </div>
             <ul class="exp-bullets">
-              <li data-i18n="deep_1">Industrial design research, conceptual sketching, prototyping, and client presentations.</li>
+              <li data-i18n="deep_1">Research: trends, patents, typologies, market.</li>
+              <li data-i18n="deep_2">Conceptual Design: handmade sketches, Photoshop sketches.</li>
+              <li data-i18n="deep_3">Industrial Design: primary prototypes, CAD.</li>
+              <li data-i18n="deep_4">Client presentations: renders, images.</li>
             </ul>
           </div>
 
@@ -671,11 +755,10 @@
           </div>
 
         </div>
-      </section>
-
-    </main>
+      </main>
+    </div>
   </div>
-</article>
+
 </div>
 
 <script>
@@ -687,13 +770,15 @@
       skills: 'Skills',
       languages: 'Languages',
       native: 'Native',
+      bilingual: 'Bilingual',
       working: 'Working',
       certifications: 'Certifications',
       cert1: 'Master Industrial & Product Design',
       cert3: 'ESAD Masterclass — Porto',
       publications: 'Publications',
-      pub1: 'The Power of Structure – A Guide to Design System Models',
-      pub2: 'Design Heroes at Tuenti',
+      pub1: 'The Power of Structure: A Guide to Design System Models',
+      pub2: 'Why Design Teams Need Psychological Safety',
+      pub3: 'How to Hire a UI Designer',
       patents: 'Patents',
       patent1: 'Graphical UI for well drilling — Display screen patent',
       education: 'Education',
@@ -706,39 +791,50 @@
       stealth_co: 'Stealth Startup',
       stealth_period: 'May 2025 – Present',
       stealth_role: 'Head of Design',
-      stealth_1: 'Leading product and brand design for AI-powered customer experiences.',
-      stealth_2: 'Evolved toolchain: Figma → Figma + Replit → Figma + VS Code + Claude, integrating AI-assisted workflows.',
-      stealth_3: 'Managing senior designers and contractors, scaling service design and design systems.',
-      stealth_4: 'Identifying AI-based automation for client-facing and back-office applications.',
-      stealth_5: 'Supporting M&A initiatives across Spain and design recruitment.',
+      stealth_1: 'Leading product and brand design initiatives for AI-powered customer experiences.',
+      stealth_2: 'Identifying AI-based automation opportunities for client-facing and back-office applications.',
+      stealth_3: 'Upgrading design ops: Rapidly evolved toolchain from Figma (Month 1) → Figma + Replit (Month 6) → Figma + VS Code + Claude (Current), integrating AI-assisted prototyping and development workflows.',
+      stealth_4: 'Managing a team of senior designers and contractors, enhancing service design and scalable design systems.',
+      stealth_5: 'Supporting M&A initiatives across Spain and recruitment efforts.',
       deel_period: 'Jun 2024 – Apr 2025',
       deel_role: 'Senior Product Designer',
       deel_1: 'Core member of the Payroll Design team, focusing on global payroll vision.',
-      deel_2: 'Researched employee payroll onboarding to improve user experience at scale.',
-      deel_3: 'Designed complex UI walkthroughs for time attendance interpretation.',
+      deel_2: 'Conducted research on employee payroll onboarding to enhance user experience at scale.',
+      deel_3: 'Designed complex UI walkthroughs for time attendance interpretation, streamlining payroll processes.',
       personio_period: 'Aug 2022 – Jul 2024',
       personio_role: 'Senior Product Designer',
-      personio_1: 'Delivered a live tracking experience at platform level on the Time & Money team.',
-      personio_2: 'Developed an automated premiums service to streamline salary management.',
-      personio_3: 'Drove innovation in HR technology in a fast-paced product environment.',
+      personio_1: 'Senior Product Designer on the Time & Money team, driving user engagement.',
+      personio_2: 'Delivered a live tracking experience at the platform level.',
+      personio_3: 'Developed an automated premiums service to streamline salary management.',
+      personio_4: 'Drove innovation in HR technology in a fast-paced product environment.',
       newrelic_period: 'Nov 2020 – Jul 2022',
       newrelic_role: 'Senior Product Designer',
-      newrelic_1: 'Designed Workloads UI and EAP Service Level Management on the End-to-End Platform team.',
-      newrelic_2: 'Conducted user research and developed information architecture to optimize navigation.',
+      newrelic_1: 'Contributed to the End-to-End Experience Platform team at New Relic, enhancing user navigation.',
+      newrelic_2: 'Designed user interfaces for Workloads and the initial EAP Service Level Management, focusing on user-centric solutions.',
+      newrelic_3: 'Conducted user research and developed information architecture to optimize interaction and visual design.',
       toptal_period: 'May 2017 – Nov 2020',
       toptal_role: 'Senior Designer — UI/UX/Product/Strategy',
-      toptal_note: 'Author, Toptal Design Blog · Design Screener. Clients:',
+      toptal_note: 'Roles:',
       velask_period: 'Sep 2016 – Nov 2020',
       velask_role: 'Product Designer & Design Consultant',
       velask_note: 'UX/UI and visual design for startups; built a surf industry brand. Clients:',
-      tuenti_period: 'Mar 2011 – Jun 2016',
-      tuenti_role: 'Senior Visual Designer → UI Designer',
-      tuenti_1: 'Created engaging interaction and visual design for a platform with 15M+ users.',
-      tuenti_2: 'Designed mobile-first responsive products across the full product lifecycle.',
-      tuenti_3: 'Visual design support for print, physical channels, and promotions.',
+      tuenti_total: 'Mar 2011 – Jun 2016',
+      tuenti_svd_role: 'Senior Visual Designer',
+      tuenti_svd_period: 'Mar 2014 – Jun 2016 · Madrid',
+      tuenti_svd_1: 'Created engaging, usable interaction and visual design solutions for a platform with 15M+ users.',
+      tuenti_svd_2: 'Responsible for visual presentation of the user interface — easy to read, understand, and find.',
+      tuenti_uid_role: 'UI Designer',
+      tuenti_uid_period: 'Mar 2011 – Feb 2014 · Madrid',
+      tuenti_uid_1: 'Constantly updating and improving layouts to achieve business goals.',
+      tuenti_uid_2: 'Working on visual design throughout the entire product lifecycle from concept through release.',
+      tuenti_uid_3: 'Designing mobile-first, responsive products that aid in customer persuasion and drive conversion.',
+      tuenti_uid_4: 'Visual design support for print, physical channels, and promotions.',
       deep_period: 'Aug 2010 – Jan 2011',
       deep_role: 'Designer',
-      deep_1: 'Industrial design research, conceptual sketching, prototyping, and client presentations.',
+      deep_1: 'Research: trends, patents, typologies, market.',
+      deep_2: 'Conceptual Design: handmade sketches, Photoshop sketches.',
+      deep_3: 'Industrial Design: primary prototypes, CAD.',
+      deep_4: 'Client presentations: renders, images.',
       eci_period: 'Apr 2008 – Jun 2008',
       eci_role: 'Design Assistant',
     },
@@ -749,13 +845,15 @@
       skills: 'Aptitudes',
       languages: 'Idiomas',
       native: 'Nativo',
+      bilingual: 'Bilingüe',
       working: 'Nivel profesional',
       certifications: 'Certificaciones',
       cert1: 'Máster en Diseño Industrial y de Producto',
       cert3: 'ESAD Masterclass — Oporto',
       publications: 'Publicaciones',
-      pub1: 'The Power of Structure – A Guide to Design System Models',
-      pub2: 'Design Heroes at Tuenti',
+      pub1: 'The Power of Structure: A Guide to Design System Models',
+      pub2: 'Why Design Teams Need Psychological Safety',
+      pub3: 'How to Hire a UI Designer',
       patents: 'Patentes',
       patent1: 'IU gráfica para perforación de pozos — Patente de pantalla',
       education: 'Educación',
@@ -769,38 +867,49 @@
       stealth_period: 'Mayo 2025 – Actualidad',
       stealth_role: 'Director de Diseño',
       stealth_1: 'Liderando diseño de producto y marca para experiencias de cliente potenciadas por IA.',
-      stealth_2: 'Evolución del toolchain: Figma → Figma + Replit → Figma + VS Code + Claude, integrando flujos de trabajo con IA.',
-      stealth_3: 'Gestión de diseñadores senior y colaboradores, escalando diseño de servicios y sistemas de diseño.',
-      stealth_4: 'Identificación de oportunidades de automatización con IA para aplicaciones internas y de cara al cliente.',
+      stealth_2: 'Identificación de oportunidades de automatización con IA para aplicaciones internas y de cara al cliente.',
+      stealth_3: 'Mejora de ops de diseño: Evolución rápida del toolchain de Figma (Mes 1) → Figma + Replit (Mes 6) → Figma + VS Code + Claude (Actual), integrando flujos de trabajo con IA.',
+      stealth_4: 'Gestión de diseñadores senior y colaboradores, escalando diseño de servicios y sistemas de diseño.',
       stealth_5: 'Apoyo en iniciativas de M&A en España y reclutamiento de diseño.',
       deel_period: 'Jun 2024 – Abr 2025',
       deel_role: 'Diseñador de Producto Senior',
       deel_1: 'Miembro clave del equipo de diseño de nóminas, con foco en la visión global de payroll.',
       deel_2: 'Investigación sobre incorporación a nómina para mejorar la UX a escala.',
-      deel_3: 'Diseño de guías complejas de UI para la interpretación de control horario.',
+      deel_3: 'Diseño de guías complejas de UI para la interpretación de control horario, optimizando procesos de nómina.',
       personio_period: 'Ago 2022 – Jul 2024',
       personio_role: 'Diseñador de Producto Senior',
-      personio_1: 'Experiencia de seguimiento en tiempo real en el equipo Time & Money.',
-      personio_2: 'Servicio de primas automatizado para simplificar la gestión salarial.',
-      personio_3: 'Impulso a la innovación en HR tech en un entorno de producto dinámico.',
+      personio_1: 'Diseñador de Producto Senior en el equipo Time & Money, mejorando el engagement de usuarios.',
+      personio_2: 'Experiencia de seguimiento en tiempo real a nivel de plataforma.',
+      personio_3: 'Servicio de primas automatizado para simplificar la gestión salarial.',
+      personio_4: 'Impulso a la innovación en HR tech en un entorno de producto dinámico.',
       newrelic_period: 'Nov 2020 – Jul 2022',
       newrelic_role: 'Diseñador de Producto Senior',
-      newrelic_1: 'Diseño de la UI de Workloads y el EAP Service Level Management en el equipo End-to-End Platform.',
-      newrelic_2: 'Investigación de usuarios y arquitectura de la información para optimizar la navegación.',
+      newrelic_1: 'Contribución al equipo End-to-End Experience Platform de New Relic, mejorando la navegación de usuario.',
+      newrelic_2: 'Diseño de interfaces para Workloads y el EAP Service Level Management inicial, con foco en soluciones centradas en el usuario.',
+      newrelic_3: 'Investigación de usuarios y arquitectura de la información para optimizar la interacción y el diseño visual.',
       toptal_period: 'May 2017 – Nov 2020',
       toptal_role: 'Diseñador Senior — UI/UX/Producto/Estrategia',
-      toptal_note: 'Autor, Toptal Design Blog · Design Screener. Clientes:',
+      toptal_note: 'Roles:',
       velask_period: 'Sep 2016 – Nov 2020',
       velask_role: 'Diseñador de Producto y Consultor',
       velask_note: 'Diseño UX/UI y visual para startups; construcción de una marca del sector surf. Clientes:',
-      tuenti_period: 'Mar 2011 – Jun 2016',
-      tuenti_role: 'Diseñador Visual Senior → Diseñador UI',
-      tuenti_1: 'Diseño de interacción y visual para una plataforma con más de 15M de usuarios.',
-      tuenti_2: 'Productos responsivos y mobile-first en todo el ciclo de vida del producto.',
-      tuenti_3: 'Soporte de diseño visual para canales impresos, físicos y promociones.',
+      tuenti_total: 'Mar 2011 – Jun 2016',
+      tuenti_svd_role: 'Diseñador Visual Senior',
+      tuenti_svd_period: 'Mar 2014 – Jun 2016 · Madrid',
+      tuenti_svd_1: 'Diseño de interacción y visual para una plataforma con más de 15M de usuarios.',
+      tuenti_svd_2: 'Responsable de la presentación visual de la interfaz — fácil de leer, entender y encontrar.',
+      tuenti_uid_role: 'Diseñador UI',
+      tuenti_uid_period: 'Mar 2011 – Feb 2014 · Madrid',
+      tuenti_uid_1: 'Actualización y mejora constante de layouts para alcanzar objetivos de negocio.',
+      tuenti_uid_2: 'Diseño visual a lo largo de todo el ciclo de vida del producto.',
+      tuenti_uid_3: 'Productos responsivos y mobile-first que impulsan la persuasión y conversión.',
+      tuenti_uid_4: 'Soporte de diseño visual para canales impresos, físicos y promociones.',
       deep_period: 'Ago 2010 – Ene 2011',
       deep_role: 'Diseñador',
-      deep_1: 'Investigación de diseño industrial, bocetado conceptual, prototipado y presentaciones a clientes.',
+      deep_1: 'Investigación: tendencias, patentes, tipologías, mercado.',
+      deep_2: 'Diseño Conceptual: bocetos a mano, bocetos en Photoshop.',
+      deep_3: 'Diseño Industrial: prototipos primarios, CAD.',
+      deep_4: 'Presentaciones a clientes: renders, imágenes.',
       eci_period: 'Abr 2008 – Jun 2008',
       eci_role: 'Asistente de Diseño',
     }
